@@ -11,6 +11,36 @@ function getCtx(): AudioContext {
   return audioCtx
 }
 
+// ─── Mute State ───
+
+let muted = false
+try { muted = localStorage.getItem('gojuon-muted') === 'true' } catch {}
+
+let masterGainNode: GainNode | null = null
+
+function getMasterGain(): GainNode {
+  const ctx = getCtx()
+  if (!masterGainNode) {
+    masterGainNode = ctx.createGain()
+    masterGainNode.gain.value = muted ? 0 : 1
+    masterGainNode.connect(ctx.destination)
+  }
+  return masterGainNode
+}
+
+export function isMuted(): boolean {
+  return muted
+}
+
+export function toggleMute(): boolean {
+  muted = !muted
+  try { localStorage.setItem('gojuon-muted', muted ? 'true' : 'false') } catch {}
+  if (masterGainNode) {
+    masterGainNode.gain.value = muted ? 0 : 1
+  }
+  return muted
+}
+
 // ─── SFX Master Gain ───
 
 let sfxGainNode: GainNode | null = null
@@ -20,7 +50,7 @@ function getSfxGain(): GainNode {
   if (!sfxGainNode) {
     sfxGainNode = ctx.createGain()
     sfxGainNode.gain.value = 0.5
-    sfxGainNode.connect(ctx.destination)
+    sfxGainNode.connect(getMasterGain())
   }
   return sfxGainNode
 }
@@ -601,7 +631,7 @@ export function startBGM() {
     const ctx = getCtx()
     bgmGainNode = ctx.createGain()
     bgmGainNode.gain.value = 0.3
-    bgmGainNode.connect(ctx.destination)
+    bgmGainNode.connect(getMasterGain())
 
     // Low-pass filter between layers and master gain
     bgmFilter = ctx.createBiquadFilter()

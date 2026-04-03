@@ -205,7 +205,7 @@ export function ResultScreen({ snapshot, onRestart, onBackToLevels }: Props) {
             >
               {isNewPersonalBest ? (
                 <span style={{ color: '#F9B233', fontWeight: 700 }}>
-                  個人新高!
+                  自己ベスト更新!
                 </span>
               ) : scoreDiff > 0 ? (
                 <span style={{ color: '#4ADE80' }}>

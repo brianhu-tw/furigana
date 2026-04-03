@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import type { GameStateSnapshot } from '../types/game'
-import { playButtonPress } from '../audio/AudioManager'
+import { playButtonPress, isMuted, toggleMute } from '../audio/AudioManager'
 
 interface Props {
   snapshot: GameStateSnapshot
@@ -8,6 +8,7 @@ interface Props {
 }
 
 export function HUD({ snapshot, onPause }: Props) {
+  const [mute, setMute] = useState(isMuted)
   const prevComboRef = useRef(snapshot.combo)
   const prevMultRef = useRef(snapshot.comboMultiplier)
   const [brokenCombo, setBrokenCombo] = useState(0)
@@ -108,9 +109,22 @@ export function HUD({ snapshot, onPause }: Props) {
         )}
       </div>
 
-      {/* Lives + Pause */}
+      {/* Lives + Mute + Pause */}
       <div className="flex items-center gap-2">
         <div className="flex gap-1">{hearts}</div>
+        <button
+          onClick={() => setMute(toggleMute())}
+          className="pointer-events-auto flex items-center justify-center rounded-lg active:scale-90 transition-transform duration-75"
+          style={{
+            width: 32,
+            height: 32,
+            background: 'rgba(255,255,255,0.15)',
+            fontSize: 16,
+          }}
+          aria-label={mute ? 'Unmute' : 'Mute'}
+        >
+          {mute ? '\u{1F507}' : '\u{1F50A}'}
+        </button>
         {onPause && (
           <button
             onClick={() => { playButtonPress(); onPause() }}

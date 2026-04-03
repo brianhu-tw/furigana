@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo } from 'react'
+import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { GameCanvas } from '../GameCanvas'
 import { HUD } from '../HUD'
 import { RomajiKeyboard } from '../RomajiKeyboard'
@@ -15,6 +15,7 @@ interface Props {
 
 export function GameScreen({ level, onGameOver, onQuit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [showKeyboard] = useState(() => 'ontouchstart' in window || navigator.maxTouchPoints > 0)
   const { snapshot, start, stop, handleInput, resize, getSnapshot, togglePause } = useGameEngine(canvasRef, level.kana, level.rowIds)
   const startedRef = useRef(false)
   const gameOverFiredRef = useRef(false)
@@ -156,11 +157,13 @@ export function GameScreen({ level, onGameOver, onQuit }: Props) {
           </span>
         </div>
       )}
-      <RomajiKeyboard
-        onInput={handleInput}
-        disabled={snapshot.isGameOver || snapshot.isPaused}
-        consonants={level.consonants}
-      />
+      {showKeyboard && (
+        <RomajiKeyboard
+          onInput={handleInput}
+          disabled={snapshot.isGameOver || snapshot.isPaused}
+          consonants={level.consonants}
+        />
+      )}
     </div>
   )
 }

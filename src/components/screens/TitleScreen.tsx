@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { playButtonPress } from '../../audio/AudioManager'
+import { useState, useEffect } from 'react'
+import { playButtonPress, isMuted, toggleMute } from '../../audio/AudioManager'
 import { getHighScores } from '../../data/highscores'
 import { TitleBackground } from '../TitleBackground'
 
@@ -9,6 +9,8 @@ interface Props {
 }
 
 export function TitleScreen({ onStart, onHighScores }: Props) {
+  const [mute, setMute] = useState(isMuted)
+
   // Keyboard navigation
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -35,6 +37,22 @@ export function TitleScreen({ onStart, onHighScores }: Props) {
       className="relative h-full overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #2D3A8C 0%, #1A1A2E 100%)' }}
     >
+      {/* Mute toggle */}
+      <button
+        onClick={() => setMute(toggleMute())}
+        className="absolute z-10 flex items-center justify-center rounded-full active:scale-90 transition-transform"
+        style={{
+          top: 'max(16px, env(safe-area-inset-top, 0px))',
+          right: 'max(24px, env(safe-area-inset-right, 0px))',
+          width: 44,
+          height: 44,
+          background: 'rgba(255,255,255,0.15)',
+        }}
+        aria-label={mute ? 'Unmute' : 'Mute'}
+      >
+        <span style={{ fontSize: 20, lineHeight: 1 }}>{mute ? '\u{1F507}' : '\u{1F50A}'}</span>
+      </button>
+
       {/* Falling kana background */}
       <TitleBackground />
 
@@ -88,7 +106,7 @@ export function TitleScreen({ onStart, onHighScores }: Props) {
             fontWeight: 900,
           }}
         >
-          開始遊戲
+          ゲームスタート
         </button>
 
         {/* Personal best */}
