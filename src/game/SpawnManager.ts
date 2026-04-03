@@ -5,10 +5,35 @@ const BASE_SPAWN_INTERVAL = 1.3 // seconds at start
 const BASE_MAX_ACTIVE = 4
 const MARGIN = 40
 
-// Difficulty ramps over time
-const SPEED_RAMP = 0.65    // +65% speed per minute
-const INTERVAL_RAMP = 0.30 // -30% interval per minute
 const MAX_SPEED = 260
+const MIN_SPAWN_INTERVAL = 0.45 // floor for sigmoid interval curve
+
+// Sigmoid difficulty curve parameters
+// Formula: BASE + (MAX - BASE) * sigmoid((t - MIDPOINT) / SCALE)
+// where sigmoid(x) = 1 / (1 + e^(-x))
+//
+// Speed curve (MIDPOINT=120s, SCALE=40s):
+//   t=0s:   ~103 px/s  (gentle start)
+//   t=30s:  ~111 px/s
+//   t=60s:  ~125 px/s  (still comfortable)
+//   t=90s:  ~148 px/s  (starting to ramp)
+//   t=120s: ~178 px/s  (midpoint)
+//   t=150s: ~207 px/s  (challenging)
+//   t=180s: ~230 px/s  (hard)
+//   t=240s: ~252 px/s  (near cap)
+const SPEED_MIDPOINT = 120  // seconds — center of sigmoid ramp
+const SPEED_SCALE = 40      // seconds — controls steepness
+
+// Spawn interval curve (MIDPOINT=90s, SCALE=35s):
+//   t=0s:   ~1.24s
+//   t=30s:  ~1.10s
+//   t=60s:  ~0.88s
+//   t=90s:  ~0.66s
+//   t=120s: ~0.52s
+//   t=150s: ~0.47s
+//   t=180s: ~0.45s (near floor)
+const INTERVAL_MIDPOINT = 90  // seconds — ramps earlier than speed
+const INTERVAL_SCALE = 35     // seconds
 
 // Fever mode threshold
 const FEVER_COMBO_THRESHOLD = 15
@@ -44,19 +69,18 @@ export class SpawnManager {
     this.elapsed = 0
   }
 
-  /** Base fall speed from time ramp */
+  /** Base fall speed from sigmoid time ramp */
   private get timeBaseSpeed(): number {
-    return Math.min(MAX_SPEED, BASE_FALL_SPEED * (1 + (this.elapsed / 60) * SPEED_RAMP))
+    const t = (this.elapsed - SPEED_MIDPOINT) / SPEED_SCALE
+    const sigmoid = 1 / (1 + Math.exp(-t))
+    return BASE_FALL_SPEED + (MAX_SPEED - BASE_FALL_SPEED) * sigmoid
   }
 
-  /** Dynamic minimum interval — decreases over time from 0.45 to 0.25 */
-  private get dynamicMinInterval(): number {
-    return Math.max(0.25, 0.45 - this.elapsed * 0.0015)
-  }
-
-  /** Current spawn interval (decreases over time) */
+  /** Current spawn interval — sigmoid decay from BASE toward MIN */
   private get currentInterval(): number {
-    return Math.max(this.dynamicMinInterval, BASE_SPAWN_INTERVAL / (1 + (this.elapsed / 60) * INTERVAL_RAMP))
+    const t = (this.elapsed - INTERVAL_MIDPOINT) / INTERVAL_SCALE
+    const sigmoid = 1 / (1 + Math.exp(-t))
+    return MIN_SPAWN_INTERVAL + (BASE_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * (1 - sigmoid)
   }
 
   /** Current max active kana (increases over time, faster after 60s) */

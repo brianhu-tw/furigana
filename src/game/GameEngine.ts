@@ -68,6 +68,7 @@ export class GameEngine {
   private warningBeeped = new Set<number>()
   private gameOverJinglePlayed = false
   private clutchJolt = 0
+  private visibilityHandler: (() => void) | null = null
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas)
@@ -122,6 +123,14 @@ export class GameEngine {
     // Play GO fanfare first, delay BGM so they don't overlap
     playGoFanfare()
     setTimeout(() => startBGM(), 600)
+
+    // Auto-pause when screen is locked or tab is hidden
+    this.visibilityHandler = () => {
+      if (document.hidden && this.state.isRunning && !this._paused && !this.state.isGameOver) {
+        this.pause()
+      }
+    }
+    document.addEventListener('visibilitychange', this.visibilityHandler)
   }
 
   private _paused = false
@@ -162,6 +171,10 @@ export class GameEngine {
 
   destroy() {
     this.stop()
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler)
+      this.visibilityHandler = null
+    }
   }
 
   getSnapshot(): GameStateSnapshot {

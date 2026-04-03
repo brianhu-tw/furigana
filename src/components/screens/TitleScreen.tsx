@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { playButtonPress } from '../../audio/AudioManager'
+import { useState, useEffect } from 'react'
+import { playButtonPress, isMuted, toggleMute } from '../../audio/AudioManager'
 import { getHighScores } from '../../data/highscores'
 import { TitleBackground } from '../TitleBackground'
 
@@ -9,6 +9,8 @@ interface Props {
 }
 
 export function TitleScreen({ onStart, onHighScores }: Props) {
+  const [mute, setMute] = useState(isMuted)
+
   // Keyboard navigation
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -35,11 +37,45 @@ export function TitleScreen({ onStart, onHighScores }: Props) {
       className="relative h-full overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #2D3A8C 0%, #1A1A2E 100%)' }}
     >
+      {/* Mute toggle */}
+      <button
+        onClick={() => setMute(toggleMute())}
+        className="absolute z-10 flex items-center justify-center rounded-full active:scale-90 transition-transform"
+        style={{
+          top: 'max(16px, env(safe-area-inset-top, 0px))',
+          right: 'max(24px, env(safe-area-inset-right, 0px))',
+          width: 44,
+          height: 44,
+        }}
+        aria-label={mute ? 'Unmute' : 'Mute'}
+      >
+        {mute ? (
+          <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="rgba(255,255,255,0.35)" stroke="none" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+          </svg>
+        ) : (
+          <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="rgba(255,255,255,0.7)" stroke="none" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+        )}
+      </button>
+
       {/* Falling kana background */}
       <TitleBackground />
 
       {/* Content layer */}
-      <div className="relative flex flex-col items-center justify-center h-full px-6" style={{ zIndex: 1 }}>
+      <div
+        className="relative flex flex-col items-center justify-center h-full"
+        style={{
+          zIndex: 1,
+          paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+        }}
+      >
         {/* Title */}
         <div className="mb-3 text-center animate-slide-down">
           <h1
@@ -81,7 +117,7 @@ export function TitleScreen({ onStart, onHighScores }: Props) {
             fontWeight: 900,
           }}
         >
-          開始遊戲
+          ゲームスタート
         </button>
 
         {/* Personal best */}

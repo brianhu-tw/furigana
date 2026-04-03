@@ -2,9 +2,43 @@ let audioCtx: AudioContext | null = null
 
 function getCtx(): AudioContext {
   if (!audioCtx) {
-    audioCtx = new AudioContext()
+    const AC = window.AudioContext || (window as any).webkitAudioContext
+    audioCtx = new AC()
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume()
   }
   return audioCtx
+}
+
+// ─── Mute State ───
+
+let muted = false
+try { muted = localStorage.getItem('gojuon-muted') === 'true' } catch {}
+
+let masterGainNode: GainNode | null = null
+
+function getMasterGain(): GainNode {
+  const ctx = getCtx()
+  if (!masterGainNode) {
+    masterGainNode = ctx.createGain()
+    masterGainNode.gain.value = muted ? 0 : 1
+    masterGainNode.connect(ctx.destination)
+  }
+  return masterGainNode
+}
+
+export function isMuted(): boolean {
+  return muted
+}
+
+export function toggleMute(): boolean {
+  muted = !muted
+  try { localStorage.setItem('gojuon-muted', muted ? 'true' : 'false') } catch {}
+  if (masterGainNode) {
+    masterGainNode.gain.value = muted ? 0 : 1
+  }
+  return muted
 }
 
 // ─── SFX Master Gain ───
@@ -16,16 +50,13 @@ function getSfxGain(): GainNode {
   if (!sfxGainNode) {
     sfxGainNode = ctx.createGain()
     sfxGainNode.gain.value = 0.5
-    sfxGainNode.connect(ctx.destination)
+    sfxGainNode.connect(getMasterGain())
   }
   return sfxGainNode
 }
 
 export function unlockAudio() {
-  const ctx = getCtx()
-  if (ctx.state === 'suspended') {
-    ctx.resume()
-  }
+  getCtx() // getCtx() handles lazy init + resume
 }
 
 // ─── Hit Sound (punchy: click transient + tonal sweep + harmonic) ───
@@ -598,9 +629,10 @@ function createLayerGain(ctx: AudioContext, value: number, master: GainNode): Ga
 export function startBGM() {
   try {
     const ctx = getCtx()
+    ctx.resume() // Re-activate AudioContext after screen lock / background tab
     bgmGainNode = ctx.createGain()
-    bgmGainNode.gain.value = 0.3
-    bgmGainNode.connect(ctx.destination)
+    bgmGainNode.gain.value = 0.15
+    bgmGainNode.connect(getMasterGain())
 
     // Low-pass filter between layers and master gain
     bgmFilter = ctx.createBiquadFilter()
@@ -978,8 +1010,8 @@ export function updateBGMDynamics(combo: number, lives: number, _maxLives: numbe
       bgmTremoloId = window.setInterval(() => {
         if (!bgmGainNode || !bgmInDanger) return
         const t = getCtx().currentTime
-        // Pulse between 0.22 and 0.30
-        const val = tremoloPhase % 2 === 0 ? 0.22 : 0.30
+        // Pulse between 0.11 and 0.15
+        const val = tremoloPhase % 2 === 0 ? 0.11 : 0.15
         bgmGainNode.gain.cancelScheduledValues(t)
         bgmGainNode.gain.setValueAtTime(bgmGainNode.gain.value, t)
         bgmGainNode.gain.linearRampToValueAtTime(val, t + 0.05)
@@ -997,7 +1029,7 @@ export function updateBGMDynamics(combo: number, lives: number, _maxLives: numbe
 
       bgmGainNode.gain.cancelScheduledValues(now)
       bgmGainNode.gain.setValueAtTime(bgmGainNode.gain.value, now)
-      bgmGainNode.gain.linearRampToValueAtTime(0.3, now + 0.2)
+      bgmGainNode.gain.linearRampToValueAtTime(0.15, now + 0.2)
     }
   } catch {
     // Audio not available
@@ -1061,7 +1093,7 @@ export function playComboMilestone(combo: number) {
       bgmGainNode.gain.cancelScheduledValues(now)
       bgmGainNode.gain.setValueAtTime(bgmGainNode.gain.value, now)
       bgmGainNode.gain.linearRampToValueAtTime(0.10, now + 0.05)
-      bgmGainNode.gain.linearRampToValueAtTime(0.30, now + 0.45)
+      bgmGainNode.gain.linearRampToValueAtTime(0.15, now + 0.45)
     }
   } catch {
     // Audio not available

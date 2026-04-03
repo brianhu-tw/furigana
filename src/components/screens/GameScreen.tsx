@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo } from 'react'
+import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { GameCanvas } from '../GameCanvas'
 import { HUD } from '../HUD'
 import { RomajiKeyboard } from '../RomajiKeyboard'
@@ -15,6 +15,7 @@ interface Props {
 
 export function GameScreen({ level, onGameOver, onQuit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [showKeyboard] = useState(() => 'ontouchstart' in window || navigator.maxTouchPoints > 0)
   const { snapshot, start, stop, handleInput, resize, getSnapshot, togglePause } = useGameEngine(canvasRef, level.kana, level.rowIds)
   const startedRef = useRef(false)
   const gameOverFiredRef = useRef(false)
@@ -127,31 +128,45 @@ export function GameScreen({ level, onGameOver, onQuit }: Props) {
           </div>
         )}
       </div>
-      {/* Input buffer indicator */}
-      {snapshot.inputBuffer && !snapshot.isPaused && !snapshot.isGameOver && (
-        <div className="flex-shrink-0 flex justify-center" style={{ background: 'rgba(26, 26, 46, 0.95)', paddingTop: 6, paddingBottom: 2 }}>
-          <span
-            style={{
-              fontFamily: "'Inter', monospace",
-              fontSize: 16,
-              color: '#F9B233',
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: 8,
-              paddingLeft: 12,
-              paddingRight: 12,
-              paddingTop: 2,
-              paddingBottom: 2,
-            }}
-          >
-            {snapshot.inputBuffer}_
-          </span>
-        </div>
+      {/* Input buffer indicator — always mounted to prevent layout shift / canvas resize flicker */}
+      <div
+        className="flex-shrink-0 flex justify-center"
+        style={{
+          background: snapshot.inputBuffer && !snapshot.isPaused && !snapshot.isGameOver
+            ? 'rgba(26, 26, 46, 0.95)'
+            : 'transparent',
+          paddingTop: 6,
+          paddingBottom: 2,
+          paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+          visibility: snapshot.inputBuffer && !snapshot.isPaused && !snapshot.isGameOver
+            ? 'visible'
+            : 'hidden',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "'Inter', monospace",
+            fontSize: 16,
+            color: '#F9B233',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: 8,
+            paddingLeft: 12,
+            paddingRight: 12,
+            paddingTop: 2,
+            paddingBottom: 2,
+          }}
+        >
+          {snapshot.inputBuffer || '\u00A0'}_
+        </span>
+      </div>
+      {showKeyboard && (
+        <RomajiKeyboard
+          onInput={handleInput}
+          disabled={snapshot.isGameOver || snapshot.isPaused}
+          consonants={level.consonants}
+        />
       )}
-      <RomajiKeyboard
-        onInput={handleInput}
-        disabled={snapshot.isGameOver || snapshot.isPaused}
-        consonants={level.consonants}
-      />
     </div>
   )
 }
