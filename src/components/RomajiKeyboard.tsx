@@ -38,8 +38,13 @@ export function RomajiKeyboard({ onInput, disabled, consonants = [] }: Props) {
 
   return (
     <div
-      className="flex-shrink-0 px-5 pt-3 pb-[max(16px,var(--safe-bottom))]"
-      style={{ background: 'rgba(26, 26, 46, 0.95)' }}
+      className="flex-shrink-0 pt-3"
+      style={{
+        background: 'rgba(26, 26, 46, 0.95)',
+        paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+        paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
+      }}
     >
       {rows.map((row, ri) => (
         <div key={ri} className="flex gap-2 justify-center mb-2">

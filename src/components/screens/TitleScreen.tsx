@@ -39,7 +39,14 @@ export function TitleScreen({ onStart, onHighScores }: Props) {
       <TitleBackground />
 
       {/* Content layer */}
-      <div className="relative flex flex-col items-center justify-center h-full px-6" style={{ zIndex: 1 }}>
+      <div
+        className="relative flex flex-col items-center justify-center h-full"
+        style={{
+          zIndex: 1,
+          paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+        }}
+      >
         {/* Title */}
         <div className="mb-3 text-center animate-slide-down">
           <h1

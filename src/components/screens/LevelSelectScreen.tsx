@@ -63,7 +63,14 @@ export function LevelSelectScreen({ onSelect, onBack }: Props) {
       style={{ background: 'linear-gradient(180deg, #2D3A8C 0%, #1A1A2E 100%)' }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 pt-[max(16px,var(--safe-top))] px-6 pb-3">
+      <div
+        className="flex-shrink-0 pb-3"
+        style={{
+          paddingTop: 'max(16px, env(safe-area-inset-top, 0px))',
+          paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+        }}
+      >
         <button
           onClick={onBack}
           className="text-white/50 text-sm mb-2 active:text-white/80"
@@ -93,7 +100,13 @@ export function LevelSelectScreen({ onSelect, onBack }: Props) {
       </div>
 
       {/* Row grid */}
-      <div className="flex-1 overflow-y-auto px-6 pb-4 flex flex-col items-center">
+      <div
+        className="flex-1 overflow-y-auto pb-4 flex flex-col items-center"
+        style={{
+          paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+        }}
+      >
         <div className="flex flex-col gap-2.5 w-full max-w-md">
           {KANA_ROWS.map(row => {
             const isSelected = selected.has(row.id)
@@ -165,7 +178,14 @@ export function LevelSelectScreen({ onSelect, onBack }: Props) {
       </div>
 
       {/* Start button */}
-      <div className="flex-shrink-0 px-6 pb-[max(16px,var(--safe-bottom))] pt-3 flex flex-col items-center">
+      <div
+        className="flex-shrink-0 pt-3 flex flex-col items-center"
+        style={{
+          paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
+        }}
+      >
         <button
           onClick={handleStart}
           className="w-full max-w-md py-4 rounded-2xl text-xl text-white active:scale-95 transition-all"

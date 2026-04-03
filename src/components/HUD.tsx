@@ -51,10 +51,12 @@ export function HUD({ snapshot, onPause }: Props) {
 
   return (
     <div
-      className="absolute top-0 left-0 right-0 flex items-start justify-between px-6 z-10 pointer-events-none"
+      className="absolute top-0 left-0 right-0 flex items-start justify-between z-10 pointer-events-none"
       style={{
         fontFamily: "'Inter', sans-serif",
         paddingTop: 'max(16px, env(safe-area-inset-top, 0px))',
+        paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
       }}
     >
       {/* Score */}

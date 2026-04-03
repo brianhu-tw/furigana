@@ -129,7 +129,16 @@ export function GameScreen({ level, onGameOver, onQuit }: Props) {
       </div>
       {/* Input buffer indicator */}
       {snapshot.inputBuffer && !snapshot.isPaused && !snapshot.isGameOver && (
-        <div className="flex-shrink-0 flex justify-center" style={{ background: 'rgba(26, 26, 46, 0.95)', paddingTop: 6, paddingBottom: 2 }}>
+        <div
+          className="flex-shrink-0 flex justify-center"
+          style={{
+            background: 'rgba(26, 26, 46, 0.95)',
+            paddingTop: 6,
+            paddingBottom: 2,
+            paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+            paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
+          }}
+        >
           <span
             style={{
               fontFamily: "'Inter', monospace",

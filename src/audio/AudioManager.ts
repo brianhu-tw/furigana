@@ -2,7 +2,11 @@ let audioCtx: AudioContext | null = null
 
 function getCtx(): AudioContext {
   if (!audioCtx) {
-    audioCtx = new AudioContext()
+    const AC = window.AudioContext || (window as any).webkitAudioContext
+    audioCtx = new AC()
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume()
   }
   return audioCtx
 }
@@ -22,10 +26,7 @@ function getSfxGain(): GainNode {
 }
 
 export function unlockAudio() {
-  const ctx = getCtx()
-  if (ctx.state === 'suspended') {
-    ctx.resume()
-  }
+  getCtx() // getCtx() handles lazy init + resume
 }
 
 // ─── Hit Sound (punchy: click transient + tonal sweep + harmonic) ───

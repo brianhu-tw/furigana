@@ -153,11 +153,13 @@ export function ResultScreen({ snapshot, onRestart, onBackToLevels }: Props) {
 
   return (
     <div
-      className="flex flex-col items-center h-full px-6 overflow-y-auto"
+      className="flex flex-col items-center h-full overflow-y-auto"
       style={{
         background: 'linear-gradient(180deg, #1A1A2E 0%, #2D3A8C 100%)',
         paddingTop: 'max(16px, env(safe-area-inset-top, 0px))',
         paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'max(24px, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(24px, env(safe-area-inset-right, 0px))',
       }}
     >
       <div className="flex flex-col items-center justify-center min-h-full py-8 w-full">
