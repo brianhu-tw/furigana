@@ -119,11 +119,22 @@ export function HUD({ snapshot, onPause }: Props) {
             width: 32,
             height: 32,
             background: 'rgba(255,255,255,0.15)',
-            fontSize: 16,
           }}
           aria-label={mute ? 'Unmute' : 'Mute'}
         >
-          {mute ? '\u{1F507}' : '\u{1F50A}'}
+          {mute ? (
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="rgba(255,255,255,0.35)" stroke="none" />
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
+            </svg>
+          ) : (
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="rgba(255,255,255,0.7)" stroke="none" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+          )}
         </button>
         {onPause && (
           <button

@@ -629,8 +629,9 @@ function createLayerGain(ctx: AudioContext, value: number, master: GainNode): Ga
 export function startBGM() {
   try {
     const ctx = getCtx()
+    ctx.resume() // Re-activate AudioContext after screen lock / background tab
     bgmGainNode = ctx.createGain()
-    bgmGainNode.gain.value = 0.3
+    bgmGainNode.gain.value = 0.15
     bgmGainNode.connect(getMasterGain())
 
     // Low-pass filter between layers and master gain
@@ -1009,8 +1010,8 @@ export function updateBGMDynamics(combo: number, lives: number, _maxLives: numbe
       bgmTremoloId = window.setInterval(() => {
         if (!bgmGainNode || !bgmInDanger) return
         const t = getCtx().currentTime
-        // Pulse between 0.22 and 0.30
-        const val = tremoloPhase % 2 === 0 ? 0.22 : 0.30
+        // Pulse between 0.11 and 0.15
+        const val = tremoloPhase % 2 === 0 ? 0.11 : 0.15
         bgmGainNode.gain.cancelScheduledValues(t)
         bgmGainNode.gain.setValueAtTime(bgmGainNode.gain.value, t)
         bgmGainNode.gain.linearRampToValueAtTime(val, t + 0.05)
@@ -1028,7 +1029,7 @@ export function updateBGMDynamics(combo: number, lives: number, _maxLives: numbe
 
       bgmGainNode.gain.cancelScheduledValues(now)
       bgmGainNode.gain.setValueAtTime(bgmGainNode.gain.value, now)
-      bgmGainNode.gain.linearRampToValueAtTime(0.3, now + 0.2)
+      bgmGainNode.gain.linearRampToValueAtTime(0.15, now + 0.2)
     }
   } catch {
     // Audio not available
@@ -1092,7 +1093,7 @@ export function playComboMilestone(combo: number) {
       bgmGainNode.gain.cancelScheduledValues(now)
       bgmGainNode.gain.setValueAtTime(bgmGainNode.gain.value, now)
       bgmGainNode.gain.linearRampToValueAtTime(0.10, now + 0.05)
-      bgmGainNode.gain.linearRampToValueAtTime(0.30, now + 0.45)
+      bgmGainNode.gain.linearRampToValueAtTime(0.15, now + 0.45)
     }
   } catch {
     // Audio not available
