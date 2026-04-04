@@ -72,6 +72,10 @@ export function useGameEngine(canvasRef: React.RefObject<HTMLCanvasElement | nul
     engineRef.current?.handleInput(char)
   }, [])
 
+  const handleDirectInput = useCallback((kana: string) => {
+    engineRef.current?.handleDirectInput(kana)
+  }, [])
+
   const resize = useCallback(() => {
     engineRef.current?.resize()
   }, [])
@@ -95,6 +99,7 @@ export function useGameEngine(canvasRef: React.RefObject<HTMLCanvasElement | nul
     resume,
     togglePause,
     handleInput,
+    handleDirectInput,
     resize,
     getSnapshot,
   }

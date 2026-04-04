@@ -17,6 +17,13 @@ export class InputManager {
     return this.buffer
   }
 
+  matchDirectKana(kana: string, state: GameState): FallingKana | null {
+    const active = state.fallingKana
+      .filter(k => k.state === 'falling' || k.state === 'warning')
+      .sort((a, b) => b.y - a.y) // closest to ground first
+    return active.find(k => k.kana === kana) ?? null
+  }
+
   update(state: GameState, _groundY: number): { hit: FallingKana | null; miss: boolean } {
     let result: { hit: FallingKana | null; miss: boolean } = { hit: null, miss: false }
 

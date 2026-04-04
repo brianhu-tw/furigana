@@ -1,4 +1,4 @@
-import type { GameState, GameStateSnapshot } from '../types/game'
+import type { GameState, GameStateSnapshot, FallingKana } from '../types/game'
 import { createInitialState, resetState } from './GameState'
 import { Renderer } from './Renderer'
 import { SpawnManager } from './SpawnManager'
@@ -289,153 +289,9 @@ export class GameEngine {
     // Process input
     const inputResult = this.inputManager.update(this.state, groundY)
     if (inputResult.hit) {
-      const k = inputResult.hit
-      const wasWarning = k.state === 'warning'
-
-      const hitDetail = this.scoreManager.applyHit(this.state, k, groundY)
-
-      // Start hit animation
-      k.state = 'hit-animating'
-      k.stateTimer = 0
-
-      // Clutch save: different particles + SFX + canvas jolt when hit in warning zone
-      if (wasWarning) {
-        this.particleSystem.spawnClutchSave(k.x, k.y)
-        playClutchSave()
-        this.clutchJolt = 3 // upward jolt in pixels
-        // "+THRILL" floating text
-        this.state.floatingTexts.push({
-          text: '+THRILL',
-          x: k.x + 30,
-          y: k.y - 20,
-          startTime: now,
-          duration: 0.8,
-          color: '#E84855',
-          fontSize: 22,
-        })
-      } else {
-        this.particleSystem.spawnHit(k.x, k.y, this.state.combo)
-      }
-      playHitSoundWithCombo(this.state.combo)
-      this.vibrate([15])
-
-      // Golden screen flash (accumulate instead of reset to avoid strobe on rapid hits)
-      this.renderer.hitFlash = Math.min(1, this.renderer.hitFlash + 0.4)
-
-      // Floating score text at hit position
-      this.state.floatingTexts.push({
-        text: `+${hitDetail.earned}`,
-        x: k.x,
-        y: k.y,
-        startTime: now,
-        duration: 0.8,
-        color: wasWarning ? '#67E8F9' : '#F9B233',
-        fontSize: 28,
-      })
-
-      // Score breakdown sub-text for high-value hits (earned > 200 means bonuses applied)
-      if (hitDetail.earned > 200) {
-        const parts: string[] = []
-        if (hitDetail.timeBonus > 1.3) parts.push(`x${hitDetail.timeBonus.toFixed(1)} 速度`)
-        if (hitDetail.thrillBonus > 1) parts.push(`x${hitDetail.thrillBonus.toFixed(1)} 驚險`)
-        if (hitDetail.comboMult > 1) parts.push(`x${hitDetail.comboMult} combo`)
-        if (parts.length > 0) {
-          this.state.floatingTexts.push({
-            text: parts.join(' '),
-            x: k.x,
-            y: k.y + 20,
-            startTime: now,
-            duration: 0.8,
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: 14,
-          })
-        }
-      }
-
-      // Update dynamic BGM after hit (combo changed)
-      updateBGMDynamics(this.state.combo, this.state.lives, this.state.maxLives)
-
-      // Check combo multiplier milestones (scoring transparency)
-      const combo = this.state.combo
-      const COMBO_MULT_MILESTONES: Record<number, string> = { 3: 'x1.5', 5: 'x2', 10: 'x3', 20: 'x5' }
-      if (COMBO_MULT_MILESTONES[combo]) {
-        const label = combo === 20
-          ? `${COMBO_MULT_MILESTONES[combo]} MAX COMBO!`
-          : `${COMBO_MULT_MILESTONES[combo]} COMBO!`
-        this.state.floatingTexts.push({
-          text: label,
-          x: this.renderer.width / 2,
-          y: this.renderer.height * 0.45,
-          startTime: now,
-          duration: 1.0,
-          color: '#FFD700',
-          fontSize: 32,
-        })
-      }
-
-      // Check combo milestones (celebration text)
-      const milestoneText = getMilestoneText(combo)
-      if (milestoneText) {
-        const milestoneColor = getMilestoneColor(combo)
-        const duration = combo >= 100 ? 2.0 : combo >= 50 ? 1.6 : 1.2
-        this.state.floatingTexts.push({
-          text: milestoneText,
-          x: this.renderer.width / 2,
-          y: this.renderer.height * 0.35,
-          startTime: now,
-          duration,
-          color: milestoneColor,
-          fontSize: 56,
-        })
-        playComboMilestone(combo)
-
-        // Tiered celebration effects
-        if (combo >= 10) {
-          this.renderer.milestoneBorderFlash = 1
-          this.shakeAmount = Math.max(this.shakeAmount, 5)
-        }
-        if (combo >= 20) {
-          this.particleSystem.spawnMilestoneBurst(
-            this.renderer.width / 2,
-            this.renderer.height * 0.35,
-            combo,
-          )
-        }
-        if (combo >= 50) {
-          this.renderer.triggerShockwave(this.renderer.width / 2, this.renderer.height * 0.35)
-        }
-      }
-
-      // Update proficiency with reaction time
-      const reactionMs = performance.now() - k.spawnTime
-      const prof = this.state.kanaProficiency.get(k.kana)
-      if (prof) {
-        prof.totalAttempts++
-        prof.hits++
-        prof.consecutiveMisses = 0
-        prof.reactionTimes.push(reactionMs)
-        if (prof.reactionTimes.length > 5) prof.reactionTimes.shift()
-      } else {
-        this.state.kanaProficiency.set(k.kana, {
-          totalAttempts: 1, hits: 1, misses: 0,
-          consecutiveMisses: 0, reactionTimes: [reactionMs],
-        })
-      }
+      this.processHit(inputResult.hit, performance.now())
     } else if (inputResult.miss) {
-      const prevCombo = this.state.combo
-      this.scoreManager.applyMiss(this.state)
-
-      // Wrong input feedback
-      playWrongInputSound()
-      this.shakeAmount = Math.max(this.shakeAmount, 1.5)
-      this.vibrate([10])
-
-      if (prevCombo >= 3) {
-        this.triggerComboBreak(prevCombo)
-      }
-
-      // Update dynamic BGM after wrong input (combo reset)
-      updateBGMDynamics(this.state.combo, this.state.lives, this.state.maxLives)
+      this.processWrongInput(performance.now())
     }
 
     // Update particles
@@ -537,6 +393,167 @@ export class GameEngine {
     for (const id of this.driftOffsets.keys()) {
       if (!activeIds.has(id)) this.driftOffsets.delete(id)
     }
+  }
+
+  handleDirectInput(kana: string) {
+    if (this.state.isGameOver || this._paused || !this.state.isRunning) return
+    const matched = this.inputManager.matchDirectKana(kana, this.state)
+    const now = performance.now()
+    if (matched) {
+      matched.state = 'hit' // mark before processHit (same as InputManager.update)
+      this.processHit(matched, now)
+    } else {
+      this.processWrongInput(now)
+    }
+    this.emitState()
+  }
+
+  private processHit(k: FallingKana, now: number) {
+    // Use Y position to determine warning state, since InputManager already set state to 'hit'
+    const wasWarning = k.y >= this.renderer.warningY
+
+    const hitDetail = this.scoreManager.applyHit(this.state, k, this.renderer.groundY)
+
+    // Start hit animation
+    k.state = 'hit-animating'
+    k.stateTimer = 0
+
+    // Clutch save: different particles + SFX + canvas jolt when hit in warning zone
+    if (wasWarning) {
+      this.particleSystem.spawnClutchSave(k.x, k.y)
+      playClutchSave()
+      this.clutchJolt = 3
+      this.state.floatingTexts.push({
+        text: '+THRILL',
+        x: k.x + 30,
+        y: k.y - 20,
+        startTime: now,
+        duration: 0.8,
+        color: '#E84855',
+        fontSize: 22,
+      })
+    } else {
+      this.particleSystem.spawnHit(k.x, k.y, this.state.combo)
+    }
+    playHitSoundWithCombo(this.state.combo)
+    this.vibrate([15])
+
+    // Golden screen flash
+    this.renderer.hitFlash = Math.min(1, this.renderer.hitFlash + 0.4)
+
+    // Floating score text
+    this.state.floatingTexts.push({
+      text: `+${hitDetail.earned}`,
+      x: k.x,
+      y: k.y,
+      startTime: now,
+      duration: 0.8,
+      color: wasWarning ? '#67E8F9' : '#F9B233',
+      fontSize: 28,
+    })
+
+    // Score breakdown sub-text for high-value hits
+    if (hitDetail.earned > 200) {
+      const parts: string[] = []
+      if (hitDetail.timeBonus > 1.3) parts.push(`x${hitDetail.timeBonus.toFixed(1)} 速度`)
+      if (hitDetail.thrillBonus > 1) parts.push(`x${hitDetail.thrillBonus.toFixed(1)} 驚險`)
+      if (hitDetail.comboMult > 1) parts.push(`x${hitDetail.comboMult} combo`)
+      if (parts.length > 0) {
+        this.state.floatingTexts.push({
+          text: parts.join(' '),
+          x: k.x,
+          y: k.y + 20,
+          startTime: now,
+          duration: 0.8,
+          color: 'rgba(255,255,255,0.7)',
+          fontSize: 14,
+        })
+      }
+    }
+
+    // Update dynamic BGM
+    updateBGMDynamics(this.state.combo, this.state.lives, this.state.maxLives)
+
+    // Combo multiplier milestones
+    const combo = this.state.combo
+    const COMBO_MULT_MILESTONES: Record<number, string> = { 3: 'x1.5', 5: 'x2', 10: 'x3', 20: 'x5' }
+    if (COMBO_MULT_MILESTONES[combo]) {
+      const label = combo === 20
+        ? `${COMBO_MULT_MILESTONES[combo]} MAX COMBO!`
+        : `${COMBO_MULT_MILESTONES[combo]} COMBO!`
+      this.state.floatingTexts.push({
+        text: label,
+        x: this.renderer.width / 2,
+        y: this.renderer.height * 0.45,
+        startTime: now,
+        duration: 1.0,
+        color: '#FFD700',
+        fontSize: 32,
+      })
+    }
+
+    // Combo milestones (celebration text)
+    const milestoneText = getMilestoneText(combo)
+    if (milestoneText) {
+      const milestoneColor = getMilestoneColor(combo)
+      const duration = combo >= 100 ? 2.0 : combo >= 50 ? 1.6 : 1.2
+      this.state.floatingTexts.push({
+        text: milestoneText,
+        x: this.renderer.width / 2,
+        y: this.renderer.height * 0.35,
+        startTime: now,
+        duration,
+        color: milestoneColor,
+        fontSize: 56,
+      })
+      playComboMilestone(combo)
+
+      if (combo >= 10) {
+        this.renderer.milestoneBorderFlash = 1
+        this.shakeAmount = Math.max(this.shakeAmount, 5)
+      }
+      if (combo >= 20) {
+        this.particleSystem.spawnMilestoneBurst(
+          this.renderer.width / 2,
+          this.renderer.height * 0.35,
+          combo,
+        )
+      }
+      if (combo >= 50) {
+        this.renderer.triggerShockwave(this.renderer.width / 2, this.renderer.height * 0.35)
+      }
+    }
+
+    // Update proficiency
+    const reactionMs = performance.now() - k.spawnTime
+    const prof = this.state.kanaProficiency.get(k.kana)
+    if (prof) {
+      prof.totalAttempts++
+      prof.hits++
+      prof.consecutiveMisses = 0
+      prof.reactionTimes.push(reactionMs)
+      if (prof.reactionTimes.length > 5) prof.reactionTimes.shift()
+    } else {
+      this.state.kanaProficiency.set(k.kana, {
+        totalAttempts: 1, hits: 1, misses: 0,
+        consecutiveMisses: 0, reactionTimes: [reactionMs],
+      })
+    }
+  }
+
+  private processWrongInput(_now: number) {
+    const prevCombo = this.state.combo
+    this.scoreManager.applyMiss(this.state)
+
+    playWrongInputSound()
+    this.shakeAmount = Math.max(this.shakeAmount, 1.5)
+    this.vibrate([10])
+
+    if (prevCombo >= 3) {
+      this.triggerComboBreak(prevCombo)
+    }
+
+    updateBGMDynamics(this.state.combo, this.state.lives, this.state.maxLives)
   }
 
   private triggerComboBreak(prevCombo = 0) {

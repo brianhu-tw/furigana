@@ -1,7 +1,8 @@
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { GameCanvas } from '../GameCanvas'
 import { HUD } from '../HUD'
-import { RomajiKeyboard } from '../RomajiKeyboard'
+import { FlickKeyboard } from '../FlickKeyboard'
+import { buildFlickKeys } from '../../data/flickMap'
 import { useGameEngine } from '../../hooks/useGameEngine'
 import type { GameStateSnapshot } from '../../types/game'
 import type { LevelDef } from '../../data/levels'
@@ -16,7 +17,8 @@ interface Props {
 export function GameScreen({ level, onGameOver, onQuit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showKeyboard] = useState(() => 'ontouchstart' in window || navigator.maxTouchPoints > 0)
-  const { snapshot, start, stop, handleInput, resize, getSnapshot, togglePause } = useGameEngine(canvasRef, level.kana, level.rowIds)
+  const { snapshot, start, stop, handleInput, handleDirectInput, resize, getSnapshot, togglePause } = useGameEngine(canvasRef, level.kana, level.rowIds)
+  const flickKeys = useMemo(() => buildFlickKeys(level.rowIds), [level.rowIds])
   const startedRef = useRef(false)
   const gameOverFiredRef = useRef(false)
 
@@ -161,10 +163,10 @@ export function GameScreen({ level, onGameOver, onQuit }: Props) {
         </span>
       </div>
       {showKeyboard && (
-        <RomajiKeyboard
-          onInput={handleInput}
+        <FlickKeyboard
+          keys={flickKeys}
+          onFlick={handleDirectInput}
           disabled={snapshot.isGameOver || snapshot.isPaused}
-          consonants={level.consonants}
         />
       )}
     </div>
