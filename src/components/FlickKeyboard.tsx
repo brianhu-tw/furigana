@@ -49,17 +49,14 @@ function FlickKey({ keyDef, onFlick, disabled }: {
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i] as HTMLDivElement
       const cellDir = cell.dataset.dir as FlickDirection
+      if (!cellDir) continue // corner spacer
       const kana = keyDef.directions[cellDir]
-      if (!kana) {
-        cell.style.display = 'none'
-        continue
-      }
-      cell.style.display = 'flex'
+      if (!kana) continue
       if (cellDir === dir) {
         cell.style.background = '#F9B233'
         cell.style.color = '#1A1A2E'
       } else {
-        cell.style.background = 'rgba(255,255,255,0.1)'
+        cell.style.background = 'rgba(255,255,255,0.15)'
         cell.style.color = '#FFFFFF'
       }
     }
@@ -150,9 +147,9 @@ function FlickKey({ keyDef, onFlick, disabled }: {
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
       style={{
-        width: 72,
-        height: 72,
-        borderRadius: 12,
+        width: 60,
+        height: 60,
+        borderRadius: 10,
         background: disabled ? '#374151' : '#2D3A8C',
         display: 'flex',
         alignItems: 'center',
@@ -167,7 +164,7 @@ function FlickKey({ keyDef, onFlick, disabled }: {
         style={{
           fontFamily: "'M PLUS Rounded 1c', sans-serif",
           fontWeight: 900,
-          fontSize: 22,
+          fontSize: 19,
           color: disabled ? '#6B7280' : '#FFFFFF',
           pointerEvents: 'none',
           textTransform: 'lowercase',
@@ -176,32 +173,30 @@ function FlickKey({ keyDef, onFlick, disabled }: {
         {keyDef.label}
       </span>
 
-      {/* Direction preview popup */}
+      {/* Direction preview popup — iOS-style cross centered on key */}
       <div
         ref={previewRef}
         style={{
           display: 'none',
           position: 'absolute',
-          bottom: '100%',
+          top: '50%',
           left: '50%',
-          transform: 'translateX(-50%)',
-          marginBottom: 8,
-          gridTemplateColumns: '48px 48px 48px',
-          gridTemplateRows: '48px 48px 48px',
-          gap: 3,
+          transform: 'translate(-50%, -50%)',
+          gridTemplateColumns: '44px 44px 44px',
+          gridTemplateRows: '44px 44px 44px',
+          gap: 2,
           zIndex: 50,
           pointerEvents: 'none',
         }}
       >
-        {/* 3x3 grid: only place cells at positions that have directions */}
         {(() => {
           const cells: React.ReactNode[] = []
           for (let row = 0; row < 3; row++) {
             for (let col = 0; col < 3; col++) {
               const dir = allDirs.find(d => DIR_POSITIONS[d].row === row && DIR_POSITIONS[d].col === col)
               if (!dir) {
-                // Empty corner cell
-                cells.push(<div key={`${row}-${col}`} style={{ display: 'none' }} />)
+                // Corner spacer — must remain in grid flow
+                cells.push(<div key={`${row}-${col}`} />)
                 continue
               }
               const kana = keyDef.directions[dir]
@@ -211,13 +206,14 @@ function FlickKey({ keyDef, onFlick, disabled }: {
                   key={dir}
                   data-dir={dir}
                   style={{
-                    display: kana ? 'flex' : 'none',
+                    display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     borderRadius: 8,
                     fontFamily: "'M PLUS Rounded 1c', sans-serif",
                     fontWeight: 900,
-                    fontSize: 18,
+                    fontSize: 16,
+                    visibility: kana ? 'visible' : 'hidden',
                     background: 'rgba(255,255,255,0.1)',
                     color: '#FFFFFF',
                   }}
