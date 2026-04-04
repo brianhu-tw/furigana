@@ -50,6 +50,11 @@ const COMBO_SPEED_TIERS = [
 const PROF_SPEED_MIN = 0.8  // weak kana: 80% speed (more time to learn)
 const PROF_SPEED_MAX = 1.25 // strong kana: 125% speed (more challenge)
 
+// Pool-size difficulty scaling — eases difficulty when more kana are active
+const POOL_REFERENCE = 5    // baseline (1 row = no adjustment)
+const POOL_EXPONENT = 0.3   // diminishing-returns curve
+const POOL_FACTOR_MIN = 0.55 // floor (all 46 kana won't go below 55%)
+
 export class SpawnManager {
   private timer = 0
   private elapsed = 0
@@ -58,6 +63,15 @@ export class SpawnManager {
   /** Total elapsed game time in seconds */
   get elapsedTime(): number {
     return this.elapsed
+  }
+
+  /** Pool-size factor: eases difficulty when recognition pool is larger */
+  private get poolFactor(): number {
+    if (this.kanaPool.length <= POOL_REFERENCE) return 1.0
+    return Math.max(
+      POOL_FACTOR_MIN,
+      Math.pow(POOL_REFERENCE / this.kanaPool.length, POOL_EXPONENT)
+    )
   }
 
   setKanaPool(pool: KanaEntry[]) {
@@ -69,26 +83,29 @@ export class SpawnManager {
     this.elapsed = 0
   }
 
-  /** Base fall speed from sigmoid time ramp */
+  /** Base fall speed from sigmoid time ramp, scaled by pool factor */
   private get timeBaseSpeed(): number {
     const t = (this.elapsed - SPEED_MIDPOINT) / SPEED_SCALE
     const sigmoid = 1 / (1 + Math.exp(-t))
-    return BASE_FALL_SPEED + (MAX_SPEED - BASE_FALL_SPEED) * sigmoid
+    return (BASE_FALL_SPEED + (MAX_SPEED - BASE_FALL_SPEED) * sigmoid) * this.poolFactor
   }
 
-  /** Current spawn interval — sigmoid decay from BASE toward MIN */
+  /** Current spawn interval — sigmoid decay from BASE toward MIN, stretched by pool factor */
   private get currentInterval(): number {
     const t = (this.elapsed - INTERVAL_MIDPOINT) / INTERVAL_SCALE
     const sigmoid = 1 / (1 + Math.exp(-t))
-    return MIN_SPAWN_INTERVAL + (BASE_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * (1 - sigmoid)
+    return (MIN_SPAWN_INTERVAL + (BASE_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * (1 - sigmoid)) / this.poolFactor
   }
 
-  /** Current max active kana (increases over time, faster after 60s) */
+  /** Current max active kana (increases over time, faster after 60s), scaled by pool factor */
   private get currentMaxActive(): number {
+    let raw: number
     if (this.elapsed > 60) {
-      return Math.min(12, BASE_MAX_ACTIVE + Math.floor(this.elapsed / 15))
+      raw = Math.min(12, BASE_MAX_ACTIVE + Math.floor(this.elapsed / 15))
+    } else {
+      raw = Math.min(7, BASE_MAX_ACTIVE + Math.floor(this.elapsed / 25))
     }
-    return Math.min(7, BASE_MAX_ACTIVE + Math.floor(this.elapsed / 25))
+    return Math.max(3, Math.floor(raw * this.poolFactor))
   }
 
   /** Combo-driven speed bonus multiplier */
@@ -143,8 +160,8 @@ export class SpawnManager {
     const effectiveInterval = state.isFever ? this.currentInterval * 0.5 : this.currentInterval
     const effectiveMaxActive = state.isFever ? this.currentMaxActive + 3 : this.currentMaxActive
 
-    // 90s+ → only check maxActive, skip interval gate
-    if (this.elapsed > 90) {
+    // Aggressive-spawn threshold: delayed by pool factor for larger pools
+    if (this.elapsed > 90 / this.poolFactor) {
       if (activeCount < effectiveMaxActive) {
         this.timer = 0
         this.spawn(state, canvasWidth)
