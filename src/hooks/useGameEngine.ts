@@ -9,8 +9,8 @@ export function useGameEngine(canvasRef: React.RefObject<HTMLCanvasElement | nul
     combo: 0,
     maxCombo: 0,
     comboMultiplier: 1,
-    lives: 3,
-    maxLives: 3,
+    lives: 5,
+    maxLives: 5,
     totalHits: 0,
     totalMisses: 0,
     isGameOver: false,
@@ -72,6 +72,10 @@ export function useGameEngine(canvasRef: React.RefObject<HTMLCanvasElement | nul
     engineRef.current?.handleInput(char)
   }, [])
 
+  const handleDirectInput = useCallback((kana: string) => {
+    engineRef.current?.handleDirectInput(kana)
+  }, [])
+
   const resize = useCallback(() => {
     engineRef.current?.resize()
   }, [])
@@ -95,6 +99,7 @@ export function useGameEngine(canvasRef: React.RefObject<HTMLCanvasElement | nul
     resume,
     togglePause,
     handleInput,
+    handleDirectInput,
     resize,
     getSnapshot,
   }

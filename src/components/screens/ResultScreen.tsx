@@ -34,6 +34,7 @@ export function ResultScreen({ snapshot, onRestart, onBackToLevels }: Props) {
 
   // Phase control
   const [phase, setPhase] = useState(1)
+  const [kanaExpanded, setKanaExpanded] = useState(snapshot.kanaStats.length <= 8)
 
   // Score count-up animation
   const [displayScore, setDisplayScore] = useState(0)
@@ -338,53 +339,81 @@ export function ResultScreen({ snapshot, onRestart, onBackToLevels }: Props) {
                 className="w-full max-w-xs mb-8"
                 style={{ opacity: 0, animation: 'fade-in 0.4s ease-out 0.2s forwards' }}
               >
-                <div className="text-white/40 text-xs mb-3 text-center tracking-wider">各文字の成績</div>
-                <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(0,0,0,0.3)' }}>
-                  <table className="w-full text-center">
-                    <thead>
-                      <tr className="text-[10px] text-white/40">
-                        <th className="py-2 font-normal">文字</th>
-                        <th className="py-2 font-normal">正解</th>
-                        <th className="py-2 font-normal">ミス</th>
-                        <th className="py-2 font-normal">正確率</th>
-                        <th className="py-2 font-normal">反応</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {snapshot.kanaStats.map(stat => (
-                        <tr
-                          key={stat.kana}
-                          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-                        >
-                          <td className="py-2.5">
-                            <span
-                              className="text-xl font-bold"
-                              style={{
-                                fontFamily: "'M PLUS Rounded 1c', sans-serif",
-                                color: stat.accuracy >= 80 ? '#4ADE80' : stat.accuracy >= 50 ? '#F9B233' : '#E84855',
-                              }}
-                            >
-                              {stat.kana}
-                            </span>
-                          </td>
-                          <td className="text-white/80 text-sm tabular-nums py-2.5">{stat.hits}</td>
-                          <td className="text-white/80 text-sm tabular-nums py-2.5">{stat.misses}</td>
-                          <td className="py-2.5">
-                            <span
-                              className="text-sm font-bold tabular-nums"
-                              style={{ color: stat.accuracy >= 80 ? '#4ADE80' : stat.accuracy >= 50 ? '#F9B233' : '#E84855' }}
-                            >
-                              {stat.accuracy}%
-                            </span>
-                          </td>
-                          <td className="text-white/50 text-xs tabular-nums py-2.5">
-                            {stat.avgReactionMs > 0 ? `${(stat.avgReactionMs / 1000).toFixed(1)}s` : '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div
+                  className="text-white/40 text-xs mb-3 text-center tracking-wider flex items-center justify-center gap-1"
+                  onClick={() => setKanaExpanded(!kanaExpanded)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  各文字の成績 ({snapshot.kanaStats.length})
+                  <span className="text-white/30 text-xs">{kanaExpanded ? '▲' : '▼'}</span>
                 </div>
+                {kanaExpanded && (
+                  <div className="relative">
+                    <div
+                      className="rounded-xl overflow-hidden"
+                      style={{ background: 'rgba(0,0,0,0.3)', maxHeight: 280, overflowY: 'auto' }}
+                    >
+                      <table className="w-full text-center">
+                        <thead>
+                          <tr className="text-[10px] text-white/40" style={{ position: 'sticky', top: 0, background: '#1e1e36', zIndex: 1 }}>
+                            <th className="py-2 font-normal">文字</th>
+                            <th className="py-2 font-normal">正解</th>
+                            <th className="py-2 font-normal">ミス</th>
+                            <th className="py-2 font-normal">正確率</th>
+                            <th className="py-2 font-normal">反応</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {snapshot.kanaStats.map(stat => (
+                            <tr
+                              key={stat.kana}
+                              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                            >
+                              <td className="py-2.5">
+                                <span
+                                  className="text-xl font-bold"
+                                  style={{
+                                    fontFamily: "'M PLUS Rounded 1c', sans-serif",
+                                    color: stat.accuracy >= 80 ? '#4ADE80' : stat.accuracy >= 50 ? '#F9B233' : '#E84855',
+                                  }}
+                                >
+                                  {stat.kana}
+                                </span>
+                              </td>
+                              <td className="text-white/80 text-sm tabular-nums py-2.5">{stat.hits}</td>
+                              <td className="text-white/80 text-sm tabular-nums py-2.5">{stat.misses}</td>
+                              <td className="py-2.5">
+                                <span
+                                  className="text-sm font-bold tabular-nums"
+                                  style={{ color: stat.accuracy >= 80 ? '#4ADE80' : stat.accuracy >= 50 ? '#F9B233' : '#E84855' }}
+                                >
+                                  {stat.accuracy}%
+                                </span>
+                              </td>
+                              <td className="text-white/50 text-xs tabular-nums py-2.5">
+                                {stat.avgReactionMs > 0 ? `${(stat.avgReactionMs / 1000).toFixed(1)}s` : '-'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {snapshot.kanaStats.length > 6 && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 32,
+                          background: 'linear-gradient(transparent, rgba(0,0,0,0.3))',
+                          borderRadius: '0 0 12px 12px',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

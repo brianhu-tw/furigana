@@ -1,6 +1,6 @@
 import type { GameState } from '../types/game'
 
-const MAX_LIVES = 3
+const MAX_LIVES = 5
 
 export function createInitialState(): GameState {
   return {
