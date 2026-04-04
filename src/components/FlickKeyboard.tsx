@@ -167,9 +167,10 @@ function FlickKey({ keyDef, onFlick, disabled }: {
         style={{
           fontFamily: "'M PLUS Rounded 1c', sans-serif",
           fontWeight: 900,
-          fontSize: 28,
+          fontSize: 22,
           color: disabled ? '#6B7280' : '#FFFFFF',
           pointerEvents: 'none',
+          textTransform: 'lowercase',
         }}
       >
         {keyDef.label}
@@ -204,6 +205,7 @@ function FlickKey({ keyDef, onFlick, disabled }: {
                 continue
               }
               const kana = keyDef.directions[dir]
+              const romajiLabel = keyDef.dirLabels[dir]
               cells.push(
                 <div
                   key={dir}
@@ -215,12 +217,12 @@ function FlickKey({ keyDef, onFlick, disabled }: {
                     borderRadius: 8,
                     fontFamily: "'M PLUS Rounded 1c', sans-serif",
                     fontWeight: 900,
-                    fontSize: 22,
+                    fontSize: 18,
                     background: 'rgba(255,255,255,0.1)',
                     color: '#FFFFFF',
                   }}
                 >
-                  {kana || ''}
+                  {romajiLabel || ''}
                 </div>
               )
             }
@@ -240,7 +242,7 @@ export function FlickKeyboard({ keys, onFlick, disabled }: Props) {
         background: 'rgba(26, 26, 46, 0.95)',
         paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
         paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-        paddingBottom: 'max(20px, env(safe-area-inset-bottom, 0px))',
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
       }}
     >
       <div

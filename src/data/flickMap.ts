@@ -6,6 +6,7 @@ export interface FlickKeyDef {
   rowId: string
   label: string
   directions: Partial<Record<FlickDirection, string>>
+  dirLabels: Partial<Record<FlickDirection, string>>
 }
 
 /** Derive flick direction from romaji ending vowel */
@@ -29,14 +30,17 @@ export function buildFlickKeys(rowIds: string[]): FlickKeyDef[] {
     .filter(row => rowIds.includes(row.id))
     .map(row => {
       const directions: Partial<Record<FlickDirection, string>> = {}
+      const dirLabels: Partial<Record<FlickDirection, string>> = {}
       for (const entry of row.kana) {
         const dir = getDirection(entry.romaji[0])
         directions[dir] = entry.kana
+        dirLabels[dir] = entry.romaji[0]
       }
       return {
         rowId: row.id,
-        label: row.kana[0].kana,
+        label: row.kana[0].romaji[0],
         directions,
+        dirLabels,
       }
     })
 }
