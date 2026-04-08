@@ -3,13 +3,37 @@ import { KANA_ROWS, buildLevelFromRows } from '../../data/levels'
 import type { LevelDef } from '../../data/levels'
 import { playButtonPress } from '../../audio/AudioManager'
 
+const SELECTED_ROWS_KEY = 'gojuon-selected-rows'
+const validRowIds = new Set(KANA_ROWS.map(r => r.id))
+
+function loadSelectedRows(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SELECTED_ROWS_KEY)
+    if (!raw) return new Set(['a'])
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return new Set(['a'])
+    const valid = parsed.filter((id: unknown) => typeof id === 'string' && validRowIds.has(id as string))
+    return valid.length > 0 ? new Set(valid) : new Set(['a'])
+  } catch {
+    return new Set(['a'])
+  }
+}
+
+function saveSelectedRows(ids: Set<string>) {
+  try {
+    localStorage.setItem(SELECTED_ROWS_KEY, JSON.stringify(Array.from(ids)))
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
 interface Props {
   onSelect: (level: LevelDef) => void
   onBack: () => void
 }
 
 export function LevelSelectScreen({ onSelect, onBack }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(['a']))
+  const [selected, setSelected] = useState<Set<string>>(loadSelectedRows)
 
   const toggle = (id: string) => {
     playButtonPress()
@@ -36,6 +60,7 @@ export function LevelSelectScreen({ onSelect, onBack }: Props) {
 
   const handleStart = useCallback(() => {
     playButtonPress()
+    saveSelectedRows(selected)
     const level = buildLevelFromRows(Array.from(selected))
     onSelect(level)
   }, [selected, onSelect])
